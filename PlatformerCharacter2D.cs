@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class PlatformerCharacter2D : MonoBehaviour 
 {
@@ -6,11 +7,13 @@ public class PlatformerCharacter2D : MonoBehaviour
 
 	[SerializeField] float maxSpeed = 10f;				// The fastest the player can travel in the x axis.
 	[SerializeField] float jumpForce = 400f;			// Amount of force added when the player jumps.	
+    [SerializeField] float jumpTime = 10f;              // Maximum time the player can push the jumpButton to jump higher.	
 
-	[Range(0, 1)]
-	[SerializeField] float crouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
-	
-	[SerializeField] float airControl = .36f;			// Whether or not a player can steer while jumping;
+    [Range(0, 1)]
+	[SerializeField] float crouchSpeed = .36f;          // Amount of maxSpeed applied to crouching movement. 1 = 100%
+
+    [Range(0, 3)]
+    [SerializeField] float airControl = 1.0f;			// Whether or not a player can steer while jumping;
 	[SerializeField] LayerMask whatIsGround;			// A mask determining what is ground to the character
 	
 	Transform groundCheck;								// A position marking where to check if the player is grounded.
@@ -56,38 +59,41 @@ public class PlatformerCharacter2D : MonoBehaviour
 		// Set whether or not the character is crouching in the animator
 		anim.SetBool("Crouch", crouch);
 
-		//only control the player if grounded or airControl is turned on
-		if (grounded || airControl != 0) {
-			if (grounded) {
-				// Reduce the speed if crouching by the crouchSpeed multiplier
-				move = (crouch ? move * crouchSpeed : move);
-			} else {
-				move = move * airControl;
-			}				
 
-			// The Speed animator parameter is set to the absolute value of the horizontal input.
-			anim.SetFloat ("Speed", Mathf.Abs (move));
 
-			// Move the character
-			GetComponent<Rigidbody2D> ().velocity = new Vector2 (move * maxSpeed, GetComponent<Rigidbody2D> ().velocity.y);
+        // Change the speed if airborn, according to the airControl multiplier
+        move = (!grounded ? move * airControl : move);
+
+        // Reduce the speed if crouching by the crouchSpeed multiplier
+        move = (crouch&&grounded ? move * crouchSpeed : move);
+
+		// The Speed animator parameter is set to the absolute value of the horizontal input.
+		anim.SetFloat("Speed", Mathf.Abs(move));
+
+		// Move the character
+		GetComponent<Rigidbody2D>().velocity = new Vector2(move * maxSpeed, GetComponent<Rigidbody2D>().velocity.y);
 			
-			// If the input is moving the player right and the player is facing left...
-			if (move > 0 && !facingRight)
-				// ... flip the player.
-				Flip ();
-			// Otherwise if the input is moving the player left and the player is facing right...
-			else if (move < 0 && facingRight)
-				// ... flip the player.
-				Flip ();
-		} 
+		// If the input is moving the player right and the player is facing left...
+		if(move > 0 && !facingRight)
+			// ... flip the player.
+			Flip();
+		// Otherwise if the input is moving the player left and the player is facing right...
+		else if(move < 0 && facingRight)
+			// ... flip the player.
+			Flip();
 
         // If the player should jump...
         if (grounded && jump) {
             // Add a vertical force to the player.
             anim.SetBool("Ground", false);
-            GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpForce));
+
+            StartCoroutine(JumpRoutine(jump));
+            //old jump control
+            //GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpForce));
         }
-	}
+    }
+
+   
 
 	
 	void Flip ()
@@ -100,4 +106,25 @@ public class PlatformerCharacter2D : MonoBehaviour
 		theScale.x *= -1;
 		transform.localScale = theScale;
 	}
+
+    IEnumerator JumpRoutine(bool jump)
+    {
+        GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+        float timer = 0;
+
+        while (jump && timer < jumpTime)
+        {
+            //Calculate how far through the jump we are as a percentage
+            //apply the full jump force on the first frame, then apply less force
+            //each consecutive frame
+
+            float proportionCompleted = timer / jumpTime;
+            Vector2 thisFrameJumpVector = Vector2.Lerp(new Vector2(0f, jumpForce), Vector2.zero, proportionCompleted);
+            GetComponent<Rigidbody2D>().AddForce(thisFrameJumpVector);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        jump = false;
+    }
 }
