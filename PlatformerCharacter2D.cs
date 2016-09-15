@@ -1,13 +1,13 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlatformerCharacter2D : MonoBehaviour 
 {
 	bool facingRight = true;							// For determining which way the player is currently facing.
 
 	[SerializeField] float maxSpeed = 10f;				// The fastest the player can travel in the x axis.
-	[SerializeField] float jumpForce = 400f;			// Amount of force added when the player jumps.	
-    [SerializeField] float jumpTime = 10f;              // Maximum time the player can push the jumpButton to jump higher.	
+	[SerializeField] public float jumpForce = 400f;			// Amount of force added when the player jumps.	
+    [SerializeField] public float jumpTime = .0001f;              // Maximum time the player can push the jumpButton to jump higher.	
+    bool jumping = false;
 
     [Range(0, 1)]
 	[SerializeField] float crouchSpeed = .36f;          // Amount of maxSpeed applied to crouching movement. 1 = 100%
@@ -18,7 +18,7 @@ public class PlatformerCharacter2D : MonoBehaviour
 	
 	Transform groundCheck;								// A position marking where to check if the player is grounded.
 	float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
-	bool grounded = false;								// Whether or not the player is grounded.
+	public bool grounded = false;								// Whether or not the player is grounded.
 	Transform ceilingCheck;								// A position marking where to check for ceilings
 	float ceilingRadius = .01f;							// Radius of the overlap circle to determine if the player can stand up
 	Animator anim;										// Reference to the player's animator component.
@@ -84,10 +84,10 @@ public class PlatformerCharacter2D : MonoBehaviour
 
         // If the player should jump...
         if (grounded && jump) {
-            // Add a vertical force to the player.
+            // Animate jumping
             anim.SetBool("Ground", false);
 
-            StartCoroutine(JumpRoutine(jump));
+            //StartCoroutine(JumpRoutine(jump));
             //old jump control
             //GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpForce));
         }
@@ -107,24 +107,5 @@ public class PlatformerCharacter2D : MonoBehaviour
 		transform.localScale = theScale;
 	}
 
-    IEnumerator JumpRoutine(bool jump)
-    {
-        GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-        float timer = 0;
 
-        while (jump && timer < jumpTime)
-        {
-            //Calculate how far through the jump we are as a percentage
-            //apply the full jump force on the first frame, then apply less force
-            //each consecutive frame
-
-            float proportionCompleted = timer / jumpTime;
-            Vector2 thisFrameJumpVector = Vector2.Lerp(new Vector2(0f, jumpForce), Vector2.zero, proportionCompleted);
-            GetComponent<Rigidbody2D>().AddForce(thisFrameJumpVector);
-            timer += Time.deltaTime;
-            yield return null;
-        }
-
-        jump = false;
-    }
 }
