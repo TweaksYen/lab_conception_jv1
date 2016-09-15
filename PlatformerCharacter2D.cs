@@ -1,21 +1,31 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class PlatformerCharacter2D : MonoBehaviour 
 {
 	bool facingRight = true;							// For determining which way the player is currently facing.
 
 	[SerializeField] float maxSpeed = 10f;				// The fastest the player can travel in the x axis.
-	[SerializeField] float jumpForce = 400f;			// Amount of force added when the player jumps.	
+
+	[SerializeField] public float jumpForce = 500f;			// Amount of force added when the player jumps.	
+	[Range(0, 1)]
+	[SerializeField] public float jumpTime = .7f;
+	[Range(0, 1)]
+	[SerializeField] float airControl = .75f;			// Amount of maxSpeed applied to in air movement. 1 = 100%
+
+	//controles du saut multiple
+	[SerializeField] int jumps_limit = 3;
+	int nbr_sauts_left = 3;
+	bool jumping = false;
 
 	[Range(0, 1)]
-	[SerializeField] float crouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
-	
-	[SerializeField] float airControl = .36f;			// Whether or not a player can steer while jumping;
+	[SerializeField] float crouchSpeed = .25f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
+
 	[SerializeField] LayerMask whatIsGround;			// A mask determining what is ground to the character
 	
 	Transform groundCheck;								// A position marking where to check if the player is grounded.
 	float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
-	bool grounded = false;								// Whether or not the player is grounded.
+	public bool grounded = false;								// Whether or not the player is grounded.
 	Transform ceilingCheck;								// A position marking where to check for ceilings
 	float ceilingRadius = .01f;							// Radius of the overlap circle to determine if the player can stand up
 	Animator anim;										// Reference to the player's animator component.
@@ -41,9 +51,8 @@ public class PlatformerCharacter2D : MonoBehaviour
 	}
 
 
-	public void Move(float move, bool crouch, bool jump)
+	public void Move(float move, bool crouch, bool jumpButtonPressed)
 	{
-
 
 		// If crouching, check to see if the character can stand up
 		if(!crouch && anim.GetBool("Crouch"))
@@ -79,14 +88,20 @@ public class PlatformerCharacter2D : MonoBehaviour
 			else if (move < 0 && facingRight)
 				// ... flip the player.
 				Flip ();
-		} 
+		}
 
         // If the player should jump...
-        if (grounded && jump) {
+		if (jumpButtonPressed && nbr_sauts_left > 0) {
             // Add a vertical force to the player.
             anim.SetBool("Ground", false);
-            GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpForce));
+			jumping = true;
+			nbr_sauts_left--;
+			StartCoroutine (JumpRoutine ());
         }
+
+		if (grounded && !jumping) {
+			nbr_sauts_left = jumps_limit;
+		}
 	}
 
 	
@@ -100,4 +115,32 @@ public class PlatformerCharacter2D : MonoBehaviour
 		theScale.x *= -1;
 		transform.localScale = theScale;
 	}
+
+	IEnumerator JumpRoutine()
+	{
+		GetComponent<Rigidbody2D> ().velocity = Vector2.zero;
+		float timer = 0;
+
+		while (CrossPlatformInput.GetButton("Jump") && timer < jumpTime)
+		{
+			//Calculate how far through the jump we are as a percentage
+			//apply the full jump force on the first frame, then apply less force
+			//each consecutive frame
+
+			float proportionCompleted = timer / jumpTime;
+			Vector2 thisFrameJumpVector;
+
+			if (timer == 0)
+				thisFrameJumpVector = new Vector2 (0f, jumpForce);
+			else
+				thisFrameJumpVector = Vector2.Lerp(new Vector2 (0f, 10f), Vector2.zero, proportionCompleted);
+
+			GetComponent<Rigidbody2D> ().AddForce(thisFrameJumpVector);
+			timer += Time.deltaTime;
+			yield return null;
+		}
+
+		jumping = false;
+	}
+
 }
