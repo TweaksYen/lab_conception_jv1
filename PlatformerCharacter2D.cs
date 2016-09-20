@@ -6,6 +6,7 @@ public class PlatformerCharacter2D : MonoBehaviour
 
 	[SerializeField] float maxSpeed = 10f;				// The fastest the player can travel in the x axis.
 	[SerializeField] public float jumpForce = 400f;			// Amount of force added when the player jumps.	
+    [SerializeField] public float wallJumpForce = 10f;
     [SerializeField] public float jumpTime = .0001f;              // Maximum time the player can push the jumpButton to jump higher.	
     bool jumping = false;
 
@@ -20,8 +21,19 @@ public class PlatformerCharacter2D : MonoBehaviour
 	float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
 	public bool grounded = false;								// Whether or not the player is grounded.
 	Transform ceilingCheck;								// A position marking where to check for ceilings
-	float ceilingRadius = .01f;							// Radius of the overlap circle to determine if the player can stand up
-	Animator anim;										// Reference to the player's animator component.
+	float ceilingRadius = .01f;                         // Radius of the overlap circle to determine if the player can stand up
+
+    Transform rightWallCheck;
+    Transform leftWallCheck;
+    float wallRadius = .05f;
+    public bool rightWalled = false;
+    public bool leftWalled = false;
+
+    Animator anim;										// Reference to the player's animator component.
+
+    //Maximum number of jump the player can do before touching the ground again
+    [SerializeField] public int maxJumps = 2;
+
 
 
     void Awake()
@@ -29,7 +41,9 @@ public class PlatformerCharacter2D : MonoBehaviour
 		// Setting up references.
 		groundCheck = transform.Find("GroundCheck");
 		ceilingCheck = transform.Find("CeilingCheck");
-		anim = GetComponent<Animator>();
+        rightWallCheck = transform.Find("RightWallCheck");
+        leftWallCheck = transform.Find("LeftWallCheck");
+        anim = GetComponent<Animator>();
 	}
 
 
@@ -39,8 +53,18 @@ public class PlatformerCharacter2D : MonoBehaviour
 		grounded = Physics2D.OverlapCircle(groundCheck.position, groundedRadius, whatIsGround);
 		anim.SetBool("Ground", grounded);
 
-		// Set the vertical animation
-		anim.SetFloat("vSpeed", GetComponent<Rigidbody2D>().velocity.y);
+        // Determine if the player is hugging a wall, left or right
+        rightWalled = Physics2D.OverlapCircle(rightWallCheck.position, wallRadius, whatIsGround);
+        leftWalled = Physics2D.OverlapCircle(leftWallCheck.position, wallRadius, whatIsGround);
+        // Turn both these variables false if they are both true, in case walls are too close
+        if (rightWalled == leftWalled == true)
+        {
+            leftWalled = false;
+            rightWalled = false;
+        }
+
+        // Set the vertical animation
+        anim.SetFloat("vSpeed", GetComponent<Rigidbody2D>().velocity.y);
 	}
 
 

@@ -8,6 +8,9 @@ public class Platformer2DUserControl : MonoBehaviour
     private bool jump;
     private bool jumping = false;
 
+    //number of jump done since last grounded
+    private int numJump = 0;
+
 
 	void Awake()
 	{
@@ -38,10 +41,23 @@ public class Platformer2DUserControl : MonoBehaviour
 		// Pass all parameters to the character control script.
 		character.Move( h, crouch , jump );
 
-        if(jump && !jumping && character.grounded)
+
+        //when character touches the ground, his jump counter resets
+        if (character.grounded)
+        {
+            numJump = 0;
+        }
+
+        if(jump && !jumping && numJump<character.maxJumps)
         {
             jumping = true;
             StartCoroutine(JumpRoutine());
+        }
+
+        if(jump && !jumping && (character.leftWalled || character.rightWalled))
+        {
+            jumping = true;
+            StartCoroutine(WallJumpRoutine());
         }
 
         // Reset the jump input once it has been used.
@@ -76,6 +92,7 @@ public class Platformer2DUserControl : MonoBehaviour
 
     IEnumerator JumpRoutine()
     {
+
         //Set the gravity to zero and apply the force once
         float startGravity = GetComponent<Rigidbody2D>().gravityScale;
         GetComponent<Rigidbody2D>().gravityScale = 0;
@@ -91,6 +108,41 @@ public class Platformer2DUserControl : MonoBehaviour
         //Set gravity back to normal at the end of the jump
         GetComponent<Rigidbody2D>().gravityScale = startGravity;
         jumping = false;
+
+        //Increment number of jumps done for multi-jump
+        numJump++;
+    }
+
+    IEnumerator WallJumpRoutine()
+    {
+
+        //Set the gravity to zero and apply the force once
+        float startGravity = GetComponent<Rigidbody2D>().gravityScale;
+        GetComponent<Rigidbody2D>().gravityScale = 0;
+
+        // Since the character hugs a wall, he will jump in the opposite direction
+        if (character.rightWalled)
+        {
+            GetComponent<Rigidbody2D>().velocity = new Vector2(+character.wallJumpForce, character.jumpForce);
+        }
+        else //il y a probablement une erreur de direction de la force, ou de condition, ou de wallCheck, donc à modifier
+             //changer le type de saut pourrait aussi avoir un impact important
+        {
+            GetComponent<Rigidbody2D>().velocity = new Vector2(-character.wallJumpForce, character.jumpForce);
+        }
+
+        float timer = 0f;
+
+        while (CrossPlatformInput.GetButton("Jump") && timer < character.jumpTime)
+        {
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        //Set gravity back to normal at the end of the jump
+        GetComponent<Rigidbody2D>().gravityScale = startGravity;
+        jumping = false;
+
     }
 
 }
