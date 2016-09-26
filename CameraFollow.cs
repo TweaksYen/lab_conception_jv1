@@ -52,8 +52,8 @@ public class CameraFollow : MonoBehaviour
 			// ... the target x coordinate should be a Lerp between the camera's current x position and the player's current x position.
 			targetX = Mathf.Lerp(transform.position.x, player.position.x, xSmooth * Time.deltaTime);
 
-		// If the player has moved beyond the y margin...
-		if(CheckYMargin())
+		// If the player has moved beyond the y margin... AND is grounded : may need to modify camera size and max jump height of player to prevent player from going out of screen...
+		if(CheckYMargin() && player.GetComponent<PlatformerCharacter2D>().grounded)
 			// ... the target y coordinate should be a Lerp between the camera's current y position and the player's current y position.
 			targetY = Mathf.Lerp(transform.position.y, player.position.y, ySmooth * Time.deltaTime);
 

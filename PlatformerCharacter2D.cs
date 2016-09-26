@@ -2,19 +2,24 @@
 
 public class PlatformerCharacter2D : MonoBehaviour 
 {
-	bool facingRight = true;							// For determining which way the player is currently facing.
+	public bool facingRight = true;							// For determining which way the player is currently facing.
 
-	[SerializeField] float maxSpeed = 10f;				// The fastest the player can travel in the x axis.
-	[SerializeField] public float jumpForce = 400f;			// Amount of force added when the player jumps.	
-    [SerializeField] public float wallJumpForce = 10f;
-    [SerializeField] public float jumpTime = .0001f;              // Maximum time the player can push the jumpButton to jump higher.	
-    bool jumping = false;
+	[SerializeField] float maxSpeed = 10f;              // The fastest the player can travel in the x axis.
+
+    [Range(400, 600)]
+    [SerializeField] public float initialJumpForce = 500f;          // Amount of force added when the player jumps.	
+    [Range(10, 25)]
+    [SerializeField] public float jumpForce = 15f;			// Amount of force added when the player jumps.	
+    [Range(50, 150)]
+    [SerializeField] public float wallJumpForce = 80f;          // Amount of force in the opposite direction added when the player jumps against a wall
+    [Range(0, 3)]
+    [SerializeField] public float jumpTime = .05f;              // Maximum time the player can push the jumpButton to jump higher.	
 
     [Range(0, 1)]
 	[SerializeField] float crouchSpeed = .36f;          // Amount of maxSpeed applied to crouching movement. 1 = 100%
 
     [Range(0, 3)]
-    [SerializeField] float airControl = 1.0f;			// Whether or not a player can steer while jumping;
+    [SerializeField] float airControl = 0.8f;			// Whether or not a player can steer while jumping;
 	[SerializeField] LayerMask whatIsGround;			// A mask determining what is ground to the character
 	
 	Transform groundCheck;								// A position marking where to check if the player is grounded.
@@ -23,11 +28,12 @@ public class PlatformerCharacter2D : MonoBehaviour
 	Transform ceilingCheck;								// A position marking where to check for ceilings
 	float ceilingRadius = .01f;                         // Radius of the overlap circle to determine if the player can stand up
 
-    Transform rightWallCheck;
-    Transform leftWallCheck;
+    Transform wallCheck;                                //A position marking where to check if the player is hugging a wall
     float wallRadius = .05f;
-    public bool rightWalled = false;
-    public bool leftWalled = false;
+    public bool walled = false;
+
+    Transform jumpHeight;                               //A position showing player's full jumping height
+    [SerializeField] bool seeJumpHeight = true;
 
     Animator anim;										// Reference to the player's animator component.
 
@@ -41,8 +47,8 @@ public class PlatformerCharacter2D : MonoBehaviour
 		// Setting up references.
 		groundCheck = transform.Find("GroundCheck");
 		ceilingCheck = transform.Find("CeilingCheck");
-        rightWallCheck = transform.Find("RightWallCheck");
-        leftWallCheck = transform.Find("LeftWallCheck");
+        wallCheck = transform.Find("WallCheck");
+        jumpHeight = transform.Find("JumpHeight");
         anim = GetComponent<Animator>();
 	}
 
@@ -53,18 +59,15 @@ public class PlatformerCharacter2D : MonoBehaviour
 		grounded = Physics2D.OverlapCircle(groundCheck.position, groundedRadius, whatIsGround);
 		anim.SetBool("Ground", grounded);
 
-        // Determine if the player is hugging a wall, left or right
-        rightWalled = Physics2D.OverlapCircle(rightWallCheck.position, wallRadius, whatIsGround);
-        leftWalled = Physics2D.OverlapCircle(leftWallCheck.position, wallRadius, whatIsGround);
-        // Turn both these variables false if they are both true, in case walls are too close
-        if (rightWalled == leftWalled == true)
-        {
-            leftWalled = false;
-            rightWalled = false;
-        }
+        // Determine if the player is hugging a wall
+        walled = Physics2D.OverlapCircle(wallCheck.position, wallRadius, whatIsGround);
 
         // Set the vertical animation
         anim.SetFloat("vSpeed", GetComponent<Rigidbody2D>().velocity.y);
+
+        // Set position of the jump height marker, and if it's visible or not
+        jumpHeight.GetComponent<SpriteRenderer>().enabled = seeJumpHeight;
+        jumpHeight.position = transform.position + new Vector3(0f, 1f + 5f);   //1f is roughly the size of the character
 	}
 
 
@@ -120,7 +123,7 @@ public class PlatformerCharacter2D : MonoBehaviour
    
 
 	
-	void Flip ()
+	public void Flip ()
 	{
 		// Switch the way the player is labelled as facing.
 		facingRight = !facingRight;
