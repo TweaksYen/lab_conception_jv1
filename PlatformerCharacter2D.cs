@@ -20,10 +20,10 @@ public class PlatformerCharacter2D : MonoBehaviour
 
     [Range(0, 3)]
     [SerializeField] float airControl = 0.8f;			// Whether or not a player can steer while jumping;
-	[SerializeField] LayerMask whatIsGround;			// A mask determining what is ground to the character
+	[SerializeField] public LayerMask whatIsGround;			// A mask determining what is ground to the character
 	
-	Transform groundCheck;								// A position marking where to check if the player is grounded.
-	float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
+	public Transform groundCheck;								// A position marking where to check if the player is grounded.
+	public float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
 	public bool grounded = false;								// Whether or not the player is grounded.
 	Transform ceilingCheck;								// A position marking where to check for ceilings
 	float ceilingRadius = .01f;                         // Radius of the overlap circle to determine if the player can stand up
@@ -34,6 +34,12 @@ public class PlatformerCharacter2D : MonoBehaviour
 
     Transform jumpHeight;                               //A position showing player's full jumping height
     [SerializeField] bool seeJumpHeight = true;
+
+    [Range(0,20)]
+    [SerializeField] public float blinkRange = 3f;      //Maximum distance at which the player can blink
+    [SerializeField] public bool keepSpeed;             // Determine if the player keeps velocity when blinking or not
+    [Range(0,10)]
+    [SerializeField] public float blinkDelay;           // Delay between each blink
 
     Animator anim;										// Reference to the player's animator component.
 
