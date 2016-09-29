@@ -22,7 +22,7 @@ public class PlatformerCharacter2D : MonoBehaviour
     [SerializeField] float airControl = 0.8f;			// Whether or not a player can steer while jumping;
 	[SerializeField] public LayerMask whatIsGround;			// A mask determining what is ground to the character
 	
-	public Transform groundCheck;								// A position marking where to check if the player is grounded.
+	Transform groundCheck;								// A position marking where to check if the player is grounded.
 	public float groundedRadius = .2f;							// Radius of the overlap circle to determine if grounded
 	public bool grounded = false;								// Whether or not the player is grounded.
 	Transform ceilingCheck;								// A position marking where to check for ceilings
@@ -33,6 +33,7 @@ public class PlatformerCharacter2D : MonoBehaviour
     public bool walled = false;
 
     Transform jumpHeight;                               //A position showing player's full jumping height
+    public float height;                                       // height of the indicator from the character
     [SerializeField] bool seeJumpHeight = true;
 
     [Range(0,20)]
@@ -54,7 +55,25 @@ public class PlatformerCharacter2D : MonoBehaviour
 		groundCheck = transform.Find("GroundCheck");
 		ceilingCheck = transform.Find("CeilingCheck");
         wallCheck = transform.Find("WallCheck");
+
+        // initialize jump height indicator and calculate it's height from the character
         jumpHeight = transform.Find("JumpHeight");
+        float totalForce = initialJumpForce;
+        float veloc = totalForce * Time.fixedDeltaTime / GetComponent<Rigidbody2D>().mass;
+        float timer = 0f;
+        float proportionCompleted = 0f;
+        float newForce;
+        while(timer <= jumpTime)
+        {
+            proportionCompleted = timer / jumpTime;
+            newForce = Mathf.Lerp(jumpForce, 0f, proportionCompleted);
+            totalForce += newForce;
+            veloc += newForce * Time.fixedDeltaTime / GetComponent<Rigidbody2D>().mass;
+            timer += Time.fixedDeltaTime;
+        }
+        
+        height = veloc * veloc / (-2 * Physics2D.gravity.y * GetComponent<Rigidbody2D>().gravityScale);
+
         anim = GetComponent<Animator>();
 	}
 
@@ -72,8 +91,10 @@ public class PlatformerCharacter2D : MonoBehaviour
         anim.SetFloat("vSpeed", GetComponent<Rigidbody2D>().velocity.y);
 
         // Set position of the jump height marker, and if it's visible or not
+
         jumpHeight.GetComponent<SpriteRenderer>().enabled = seeJumpHeight;
-        jumpHeight.position = transform.position + new Vector3(0f, 1f + 5f);   //1f is roughly the size of the character
+        jumpHeight.position = transform.position + new Vector3(0f, transform.localScale.y * (0.5f) + height);   
+        //0.5f is roughly the size of the character + you have to multiply by it's scale
 	}
 
 
@@ -119,10 +140,6 @@ public class PlatformerCharacter2D : MonoBehaviour
         if (grounded && jump) {
             // Animate jumping
             anim.SetBool("Ground", false);
-
-            //StartCoroutine(JumpRoutine(jump));
-            //old jump control
-            //GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpForce));
         }
     }
 

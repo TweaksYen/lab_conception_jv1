@@ -74,7 +74,8 @@ public class Platformer2DUserControl : MonoBehaviour
 
         canBlink =
             ((transform.position - blinkPos).magnitude < character.blinkRange)         // blinker is an active object only if close enough to the player
-            && !Physics2D.OverlapCircle(blinkPos - new Vector3(0f, .6f), character.groundedRadius, character.whatIsGround);  //avoid teleporting into the ground    
+            && !Physics2D.OverlapCircle(blinkPos - new Vector3(0f, .6f), character.groundedRadius, character.whatIsGround);  //avoid teleporting into the ground  
+        // /!\ HARDCODED VALUE OF CHARACTER HEIGHT FROM MID TO FEET -0.6f on y 
 
         blinkTimer += Time.deltaTime;   //increments timer for the blink
         if(blinkTimer < character.blinkDelay)   //while blink is not ready, the character will flash (appear/disappear)
@@ -87,8 +88,9 @@ public class Platformer2DUserControl : MonoBehaviour
             {
                 character.GetComponent<Renderer>().enabled = true;
             }
-            //StartCoroutine(BlinkNotReady());
         }
+
+        if (blinkTimer > character.blinkDelay) character.GetComponent<Renderer>().enabled = true;   // just to make sure character is fully visible when blink is ready
 
         if (blink && blinkTimer >= character.blinkDelay)   // player has to wait for the blink to be ready
         {
@@ -121,11 +123,10 @@ public class Platformer2DUserControl : MonoBehaviour
             //each consecutive frame
             float proportionCompleted = timer / character.jumpTime;
             Vector2 thisFrameJumpVector = Vector2.Lerp(new Vector2(0f, character.jumpForce), Vector2.zero, proportionCompleted);
-           
-
-            //Vector2 thisFrameJumpVector = new Vector2(0f, character.jumpForce);
+            
             GetComponent<Rigidbody2D>().AddForce(thisFrameJumpVector);
-            timer += Time.deltaTime;
+            //temporaire : pour tests de calcul de hauteur de saut !
+            timer += Time.fixedDeltaTime;
             yield return null;
         }
 
