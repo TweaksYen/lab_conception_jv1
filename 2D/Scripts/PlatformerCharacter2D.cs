@@ -85,6 +85,7 @@ public class PlatformerCharacter2D : MonoBehaviour
 		/***** jump handling *****/
 		if (jumpButtonPressed && jumper.canJump()) {
 			anim.SetBool("Ground", false);
+			jumper.lockMarker ();
 			jumper.jump();
         }
 
