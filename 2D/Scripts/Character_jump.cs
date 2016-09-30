@@ -3,8 +3,9 @@ using System.Collections;
 
 public class Character_jump : MonoBehaviour {
 	// **** jump characteristics ****
-	[SerializeField] public float jumpForceX = 400f;	// Amount of force added when the player jumps.	
+	[SerializeField] public float jumpForceX = 400f;	// Amount of force added when the player jumps (initial force)	
 	[SerializeField] public float jumpForceY = 500f;	// Amount of force added when the player jumps.	
+	[SerializeField] public float jumpForceAddedY = 20;	// Amount of force added when the player jumps (further forces)
 	[SerializeField] public float jumpTime = .7f;		// duration of the normal jump
 	[SerializeField] public float wallJumpTime = .6f;	// duration of the walljump
 	[Range(0, 1)]
@@ -46,7 +47,7 @@ public class Character_jump : MonoBehaviour {
 			if (timer == 0)
 				thisFrameForce = jumpForceY;
 			else
-				thisFrameForce = Mathf.Lerp (20f, 0f, proportionCompleted);
+				thisFrameForce = Mathf.Lerp (jumpForceAddedY, 0f, proportionCompleted);
 
 			//ajout de la vitesse engendrée par la force à cette itération, appliquée pendant 0.02s
 			velocity = velocity + (thisFrameForce * Time.fixedDeltaTime / GetComponent<Rigidbody2D> ().mass);
@@ -139,7 +140,7 @@ public class Character_jump : MonoBehaviour {
 				if (timer == 0)
 					thisFrameJumpVector = new Vector2 (0f, jumpForceY);
 				else
-					thisFrameJumpVector = Vector2.Lerp(new Vector2 (0f, 20f), Vector2.zero, proportionCompleted);
+					thisFrameJumpVector = Vector2.Lerp(new Vector2 (0f, jumpForceAddedY), Vector2.zero, proportionCompleted);
 
 				GetComponent<Rigidbody2D> ().AddForce(thisFrameJumpVector);
 

@@ -11,13 +11,13 @@ public class Character_blink : MonoBehaviour {
 
 	// **** blink icon ****
 	public GameObject prefab_blink;
-	public Image blink_status;
 
+	private PlatformerCharacter2D character;
 
 	
 	// Update is called once per frame
-	void Update () {
-	
+	void Awake () {
+		character = GetComponent<PlatformerCharacter2D>();
 	}
 
 	public void blink() {
@@ -34,6 +34,7 @@ public class Character_blink : MonoBehaviour {
 		bool is_in_range = true;
 		Vector2 mousePosition = transform.position;
 		GameObject blink = (GameObject)Instantiate (prefab_blink, new Vector3 (0, 0, 0), Quaternion.identity);
+		Transform groundCheck = blink.transform.Find ("groundCheck");
 
 		while (Input.GetKey(KeyCode.LeftShift))
 		{
@@ -41,7 +42,7 @@ public class Character_blink : MonoBehaviour {
 			blink.transform.position = mousePosition;
 			blink.transform.localScale = transform.localScale;
 
-			if (Vector2.Distance (mousePosition, transform.position) < blink_radius) {
+			if ((Vector2.Distance (mousePosition, transform.position) < blink_radius) && (!Physics2D.OverlapCircle(groundCheck.position, .3f, character.whatIsGround))) {
 				is_in_range = true;
 				blink.SetActive(true);
 			} else {
@@ -61,15 +62,18 @@ public class Character_blink : MonoBehaviour {
 			}
 
 			can_blink = false;
-			//yield return new WaitForSeconds(blink_delay);
 			float timer = 0;
 			while (timer < blink_delay)
 			{
-				blink_status.color = Color.Lerp (new Color (1f, 0f, 0f, 1f), new Color (1f, 1f, 1f, 1f), timer / blink_delay);
+				if (Time.fixedTime % .2 < .1) {
+					GetComponent<SpriteRenderer> ().color = new Color (1f, 1f, 1f, .5f);
+				} else {
+					GetComponent<SpriteRenderer>().color = new Color (1f, 1f, 1f, 1f);
+				}
 				timer += Time.deltaTime;
 				yield return null;
 			}
-
+			GetComponent<SpriteRenderer>().color = new Color (1f, 1f, 1f, 1f);
 			can_blink = true;
 		}
 	}
